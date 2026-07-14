@@ -55,6 +55,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -64,16 +65,20 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.table.DefaultTableCellRenderer;
 
+import megamek.client.ratgenerator.AvailabilityRating;
 import megamek.client.ratgenerator.ChassisRecord;
 import megamek.client.ratgenerator.FactionRecord;
 import megamek.client.ratgenerator.MissionRole;
 import megamek.client.ratgenerator.RATGenerator;
+import megamek.client.ui.dialogs.UnitLoadingDialog;
 import megamek.client.ui.util.UIUtil;
 import megamek.common.loaders.MekFileParser;
 import megamek.common.units.Entity;
 import megamek.common.units.ForceGeneratorAvailability;
+import megamek.common.units.UnitType;
 import megameklab.ui.EntitySource;
 import megameklab.ui.dialog.AddFactionsDialog;
+import megameklab.ui.dialog.MegaMekLabUnitSelectorDialog;
 import megameklab.ui.generalUnit.AvailabilityTableModel.AvailabilityRow;
 import megameklab.ui.util.ITab;
 import megameklab.ui.util.RefreshListener;
@@ -126,6 +131,7 @@ public class AvailabilityTab extends ITab {
 
     private final JButton addButton = new JButton("+ Add factions...");
     private final JButton removeButton = new JButton("- Remove");
+    private final JButton copyFromUnitButton = new JButton("Copy numbers from a unit...");
 
     /** Guards the listeners while the editor is being filled in from the selected row. */
     private boolean updatingEditor = false;
@@ -204,11 +210,79 @@ public class AvailabilityTab extends ITab {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         addButton.addActionListener(event -> addFactions());
         removeButton.addActionListener(event -> removeSelectedFaction());
+        copyFromUnitButton.addActionListener(event -> copyNumbersFromUnit());
+        copyFromUnitButton.setToolTipText("Start from a design you already know, rather than from a blank table.");
         buttonPanel.add(addButton);
         buttonPanel.add(removeButton);
+        buttonPanel.add(copyFromUnitButton);
         panel.add(buttonPanel, BorderLayout.SOUTH);
 
         return panel;
+    }
+
+    /**
+     * Fills the table from a canon design's own numbers.
+     * <p>
+     * Nobody has intuition for a base-2 log scale, so the surest way to a sane table is to start from a design whose
+     * commonness the player already understands and adjust from there.
+     * </p>
+     */
+    private void copyNumbersFromUnit() {
+        UnitLoadingDialog unitLoadingDialog = new UnitLoadingDialog(null);
+        unitLoadingDialog.setVisible(true);
+
+        Entity chosenEntity;
+        try {
+            MegaMekLabUnitSelectorDialog selector =
+                  new MegaMekLabUnitSelectorDialog(null, unitLoadingDialog, false);
+            chosenEntity = selector.getChosenEntity();
+        } finally {
+            unitLoadingDialog.setVisible(false);
+        }
+
+        if (chosenEntity == null) {
+            return;
+        }
+
+        List<AvailabilityRating> ratings = AvailabilityCalibration.ratingsOf(chassisKeyOf(chosenEntity),
+              getEntity().getYear());
+
+        if (ratings.isEmpty()) {
+            JOptionPane.showMessageDialog(this,
+                  "The Force Generator has no availability for " + chosenEntity.getShortNameRaw() + " in "
+                        + getEntity().getYear() + ", so there is nothing to copy.",
+                  "Nothing to copy",
+                  JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+
+        for (AvailabilityRating rating : ratings) {
+            tableModel.addRow(new AvailabilityRow(rating.getFactionCode(),
+                  factionNameOf(rating.getFactionCode()),
+                  rating.getAvailability(),
+                  ForceGeneratorAvailability.UNSPECIFIED_YEAR,
+                  ForceGeneratorAvailability.UNSPECIFIED_YEAR,
+                  false));
+        }
+
+        tableModel.markStaleFactions(activeFactionCodes());
+        writeBack();
+    }
+
+    /**
+     * Builds the key the Force Generator files a design's chassis under.
+     *
+     * @param entity the design
+     *
+     * @return the chassis key, e.g. "Archer[Mek]"
+     */
+    private static String chassisKeyOf(Entity entity) {
+        String key = entity.getChassis() + '[' + UnitType.getTypeName(entity.getUnitType()) + ']';
+        if (!entity.isOmni()) {
+            return key;
+        }
+
+        return key + (entity.isClan() ? "ClanOmni" : "ISOmni");
     }
 
     private JPanel buildEditorPanel() {
