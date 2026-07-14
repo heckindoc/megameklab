@@ -51,6 +51,7 @@ import megameklab.ui.generalUnit.AbstractEquipmentTab;
 import megameklab.ui.generalUnit.FluffTab;
 import megameklab.ui.generalUnit.AnalysisTab;
 import megameklab.ui.generalUnit.PreviewTab;
+import megameklab.ui.generalUnit.AvailabilityTab;
 import megameklab.ui.generalUnit.QuirksTab;
 import megameklab.ui.util.TabScrollPane;
 
@@ -68,6 +69,7 @@ public class PMMainUI extends MegaMekLabMainUI {
     private PMBuildTab buildTab;
     private PMStatusBar statusbar;
     private QuirksTab quirksTab;
+    private AvailabilityTab availabilityTab;
     private FluffTab fluffTab;
     private FloatingEquipmentDatabaseDialog floatingEquipmentDatabase;
 
@@ -99,18 +101,21 @@ public class PMMainUI extends MegaMekLabMainUI {
         equipmentTab = new PMEquipmentTab(this);
         buildTab = new PMBuildTab(this, this);
         quirksTab = new QuirksTab(this);
+        availabilityTab = new AvailabilityTab(this);
         fluffTab = new FluffTab(this);
         structureTab.addRefreshedListener(this);
         equipmentTab.addRefreshedListener(this);
         statusbar.addRefreshedListener(this);
         fluffTab.setRefreshedListener(this);
         quirksTab.addRefreshedListener(this);
+        availabilityTab.addRefreshedListener(this);
 
         configPane.addTab("Structure/Armor", new TabScrollPane(structureTab));
         configPane.addTab("Equipment", equipmentTab);
         configPane.addTab("Assign Criticals", new TabScrollPane(buildTab));
         configPane.addTab("Fluff", new TabScrollPane(fluffTab));
         configPane.addTab("Quirks", new TabScrollPane(quirksTab, quirksTab.refreshOnShow));
+        configPane.addTab("Availability", new TabScrollPane(availabilityTab, availabilityTab.refreshOnShow));
         configPane.addTab("Preview", previewTab);
         configPane.addTab("Analysis", analysisTab);
 
@@ -162,6 +167,7 @@ public class PMMainUI extends MegaMekLabMainUI {
         equipmentTab.refresh();
         buildTab.refresh();
         quirksTab.refresh();
+        availabilityTab.refresh();
         fluffTab.refresh();
         previewTab.refresh();
         analysisTab.refresh();

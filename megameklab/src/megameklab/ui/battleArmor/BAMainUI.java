@@ -49,6 +49,7 @@ import megameklab.ui.dialog.FloatingEquipmentDatabaseDialog;
 import megameklab.ui.generalUnit.FluffTab;
 import megameklab.ui.generalUnit.AnalysisTab;
 import megameklab.ui.generalUnit.PreviewTab;
+import megameklab.ui.generalUnit.AvailabilityTab;
 import megameklab.ui.generalUnit.QuirksTab;
 import megameklab.ui.util.TabScrollPane;
 
@@ -67,6 +68,7 @@ public class BAMainUI extends MegaMekLabMainUI {
         return fluffTab;
     }
     private QuirksTab quirksTab;
+    private AvailabilityTab availabilityTab;
     private FloatingEquipmentDatabaseDialog floatingEquipmentDatabase;
 
     public BAMainUI(Entity entity, String filename) {
@@ -89,6 +91,7 @@ public class BAMainUI extends MegaMekLabMainUI {
         equipTab = new BAEquipmentTab(this);
         fluffTab = new FluffTab(this);
         quirksTab = new QuirksTab(this);
+        availabilityTab = new AvailabilityTab(this);
         statusbar = new BAStatusBar(this);
         buildTab = new BABuildTab(this);
         previewTab = new PreviewTab(this);
@@ -99,12 +102,14 @@ public class BAMainUI extends MegaMekLabMainUI {
         statusbar.addRefreshedListener(this);
         fluffTab.setRefreshedListener(this);
         quirksTab.addRefreshedListener(this);
+        availabilityTab.addRefreshedListener(this);
 
         configPane.addTab("Structure/Armor", new TabScrollPane(structureTab));
         configPane.addTab("Equipment", equipTab);
         configPane.addTab("Assign Criticals", new TabScrollPane(buildTab));
         configPane.addTab("Fluff", new TabScrollPane(fluffTab));
         configPane.addTab("Quirks", new TabScrollPane(quirksTab, quirksTab.refreshOnShow));
+        configPane.addTab("Availability", new TabScrollPane(availabilityTab, availabilityTab.refreshOnShow));
         configPane.addTab("Preview", previewTab);
         configPane.addTab("Analysis", analysisTab);
 
@@ -148,6 +153,7 @@ public class BAMainUI extends MegaMekLabMainUI {
         refreshStructure();
         refreshEquipmentTable();
         quirksTab.refresh();
+        availabilityTab.refresh();
         fluffTab.refresh();
         refreshBuild();
         refreshPreview();
