@@ -36,17 +36,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import megamek.common.equipment.Engine;
+import megamek.common.loaders.MekFileParser;
 import megamek.common.units.BipedMek;
 import megamek.common.units.Entity;
 import megamek.logging.MMLogger;
 import megameklab.testing.util.InitializeTypes;
 import megameklab.ui.PopupMessages;
+import megameklab.util.UnitUtil;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -74,6 +78,96 @@ class MegaMekLabFileSaverTest {
         assertEquals(destination.toString(), savedFile);
         assertNotEquals(previousUUID, entity.getUnitFileUUID());
         assertTrue(Files.readString(destination.toPath()).contains("uuid:" + entity.getUnitFileUUID()));
+    }
+
+    @Test
+    void saveAsKeepsUUIDForLoadedUnitWithUnchangedName() throws Exception {
+        Entity entity = loadMek(temporaryDirectory.resolve("source.mtf"), "Loaded Chassis", "Loaded Model");
+        String previousUUID = entity.getUnitFileUUID();
+        File destination = temporaryDirectory.resolve("saved-as.mtf").toFile();
+        MegaMekLabFileSaver saver = new MegaMekLabFileSaver(
+              MMLogger.create(MegaMekLabFileSaverTest.class), "Save As");
+
+        try (MockedStatic<PopupMessages> ignored = mockStatic(PopupMessages.class)) {
+            assertEquals(destination.toString(), saver.saveUnitAsTo(null, destination, entity));
+        }
+
+        assertEquals(previousUUID, entity.getUnitFileUUID());
+    }
+
+    @Test
+    void saveAsRegeneratesUUIDWhenLoadedUnitNameChanges() throws Exception {
+        Entity entity = loadMek(temporaryDirectory.resolve("source.mtf"), "Loaded Chassis", "Loaded Model");
+        String previousUUID = entity.getUnitFileUUID();
+        entity.setModel("Changed Model");
+        File destination = temporaryDirectory.resolve("saved-as.mtf").toFile();
+        MegaMekLabFileSaver saver = new MegaMekLabFileSaver(
+              MMLogger.create(MegaMekLabFileSaverTest.class), "Save As");
+
+        try (MockedStatic<PopupMessages> ignored = mockStatic(PopupMessages.class)) {
+            assertEquals(destination.toString(), saver.saveUnitAsTo(null, destination, entity));
+        }
+
+        assertNotEquals(previousUUID, entity.getUnitFileUUID());
+        String savedUUID = entity.getUnitFileUUID();
+        File secondDestination = temporaryDirectory.resolve("saved-as-again.mtf").toFile();
+
+        try (MockedStatic<PopupMessages> ignored = mockStatic(PopupMessages.class)) {
+            assertEquals(secondDestination.toString(), saver.saveUnitAsTo(null, secondDestination, entity));
+        }
+
+        assertEquals(savedUUID, entity.getUnitFileUUID());
+    }
+
+    @Test
+    void saveAsUsesDestinationUUIDWhenNamesMatch() throws Exception {
+        Entity target = loadMek(temporaryDirectory.resolve("target-source.mtf"), "Shared Chassis", "Shared Model");
+        File destination = temporaryDirectory.resolve("destination.mtf").toFile();
+        Files.writeString(destination.toPath(), UnitUtil.saveUnitToString(target, true));
+        String targetUUID = target.getUnitFileUUID();
+        Entity entity = loadMek(temporaryDirectory.resolve("current-source.mtf"), "Shared Chassis", "Shared Model");
+        assertNotEquals(targetUUID, entity.getUnitFileUUID());
+        MegaMekLabFileSaver saver = new MegaMekLabFileSaver(
+              MMLogger.create(MegaMekLabFileSaverTest.class), "Save As");
+
+        try (MockedStatic<PopupMessages> ignored = mockStatic(PopupMessages.class)) {
+            assertEquals(destination.toString(), saver.saveUnitAsTo(null, destination, entity));
+        }
+
+        assertEquals(targetUUID, entity.getUnitFileUUID());
+        assertTrue(Files.readString(destination.toPath()).contains("uuid:" + targetUUID));
+    }
+
+    @Test
+    void saveAsCanKeepCurrentUUIDWhenOverwritingDifferentUnit() throws Exception {
+        Entity target = loadMek(temporaryDirectory.resolve("target-source.mtf"), "Target Chassis", "Target Model");
+        File destination = temporaryDirectory.resolve("destination.mtf").toFile();
+        Files.writeString(destination.toPath(), UnitUtil.saveUnitToString(target, true));
+        Entity entity = loadMek(temporaryDirectory.resolve("current-source.mtf"), "Current Chassis", "Current Model");
+        String currentUUID = entity.getUnitFileUUID();
+        String targetUUID = target.getUnitFileUUID();
+        MegaMekLabFileSaver saver = new MegaMekLabFileSaver(
+              MMLogger.create(MegaMekLabFileSaverTest.class), "Save As");
+
+        try (MockedStatic<PopupMessages> messages = mockStatic(PopupMessages.class)) {
+            messages.when(() -> PopupMessages.showUnitFileUUIDConflict(
+                        any(), any(Entity.class), any(Entity.class)))
+                  .thenReturn(PopupMessages.UnitFileUUIDChoice.CURRENT);
+            assertEquals(destination.toString(), saver.saveUnitAsTo(null, destination, entity));
+        }
+
+        assertNotEquals(targetUUID, currentUUID);
+        assertEquals(currentUUID, entity.getUnitFileUUID());
+    }
+
+    private Entity loadMek(Path file, String chassis, String model) throws Exception {
+        BipedMek mek = new BipedMek();
+        mek.setWeight(20.0);
+        mek.setEngine(new Engine(100, Engine.NORMAL_ENGINE, 0));
+        mek.setChassis(chassis);
+        mek.setModel(model);
+        Files.writeString(file, UnitUtil.saveUnitToString(mek, true));
+        return new MekFileParser(file.toFile()).getEntity();
     }
 
     @Test
