@@ -141,6 +141,15 @@ public class AvailabilityTab extends ITab {
     }
 
     /**
+     * The rows the tab is showing.
+     *
+     * @return the table model
+     */
+    public AvailabilityTableModel getTableModel() {
+        return tableModel;
+    }
+
+    /**
      * Reloads the tab from the unit. The introduction year lives on Basic Info, so it can change under this tab; the
      * faction list and the warnings are rebuilt every time.
      */
