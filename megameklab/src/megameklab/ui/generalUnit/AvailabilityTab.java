@@ -604,8 +604,9 @@ public class AvailabilityTab extends ITab {
         List<String> warnings = new ArrayList<>();
 
         if (isCanonUnit()) {
-            warnings.add("This is a canon unit. The Force Generator will IGNORE everything on this tab. "
-                  + "Save it under a new model name to make it a custom variant.");
+            warnings.add("This is a canon unit. What you set here REPLACES its canon availability for the factions you "
+                  + "list, so it changes how canon forces generate for anyone who installs this file. To leave canon "
+                  + "alone, save it under a new model name as a custom variant instead.");
         } else if (isCanonChassis()) {
             warnings.add("This is a custom variant of a canon chassis. Factions that already field the chassis keep "
                   + "their canon rating, so your number only decides which variant they get. Factions that do not "
