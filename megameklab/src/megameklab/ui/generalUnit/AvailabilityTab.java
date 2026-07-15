@@ -130,6 +130,8 @@ public class AvailabilityTab extends ITab {
 
     private final Map<MissionRole, JCheckBox> roleCheckBoxes = new LinkedHashMap<>();
     private final JPanel rolesPanel = new JPanel(new GridLayout(0, ROLE_COLUMNS));
+    /** Roles currently shown, being those that fit the unit type plus any the file declares. */
+    private final Set<MissionRole> offeredRoles = EnumSet.noneOf(MissionRole.class);
     /** Roles the unit file declares that do not apply to this unit type. Shown, not dropped. */
     private final Set<MissionRole> mismatchedRoles = EnumSet.noneOf(MissionRole.class);
 
@@ -168,9 +170,17 @@ public class AvailabilityTab extends ITab {
      * @return {@code true} if the player can see and tick it
      */
     public boolean isRoleOffered(MissionRole role) {
-        JCheckBox checkBox = roleCheckBoxes.get(role);
+        return offeredRoles.contains(role);
+    }
 
-        return (checkBox != null) && checkBox.isVisible();
+    /**
+     * How many role checkboxes are actually in the grid. Equals the number of offered roles when the grid packs with
+     * no hidden placeholder cells; used to guard against the holes that setVisible-based hiding left behind.
+     *
+     * @return the checkbox count
+     */
+    int missionRoleGridSize() {
+        return rolesPanel.getComponentCount();
     }
 
     /**
@@ -349,11 +359,12 @@ public class AvailabilityTab extends ITab {
     private JPanel buildRolesPanel() {
         rolesPanel.setBorder(BorderFactory.createTitledBorder("Mission roles (optional)"));
 
+        // Build every checkbox once, but leave the panel empty: loadMissionRoles adds only the ones to show, so the
+        // grid packs with no holes where a role does not apply to this unit type.
         for (MissionRole role : MissionRole.values()) {
             JCheckBox checkBox = new JCheckBox(role.toString().replace('_', ' '));
             checkBox.addActionListener(event -> writeBack());
             roleCheckBoxes.put(role, checkBox);
-            rolesPanel.add(checkBox);
         }
 
         return rolesPanel;
@@ -496,8 +507,9 @@ public class AvailabilityTab extends ITab {
      * Shows only the roles that mean anything for this unit type. A Mek has no business being offered "mek carrier" or
      * "paratrooper", and the Force Generator would ignore them anyway.
      * <p>
-     * A role the unit file declares that does not fit is kept, selected and visible, so the player can see it and
-     * decide. Quietly dropping something out of somebody's file is not this tab's job.
+     * Only the roles to show are added to the grid, in role order, so the checkboxes pack together with no gaps where a
+     * role does not apply. A role the unit file declares that does not fit is kept, selected, so the player can see it
+     * and decide. Quietly dropping something out of somebody's file is not this tab's job.
      * </p>
      */
     private void loadMissionRoles(String missionRoles) {
@@ -515,15 +527,20 @@ public class AvailabilityTab extends ITab {
 
         int unitType = getEntity().getUnitType();
         mismatchedRoles.clear();
+        offeredRoles.clear();
+        rolesPanel.removeAll();
 
-        for (Map.Entry<MissionRole, JCheckBox> entry : roleCheckBoxes.entrySet()) {
-            MissionRole role = entry.getKey();
-            JCheckBox checkBox = entry.getValue();
+        for (MissionRole role : MissionRole.values()) {
             boolean isSelected = chosen.contains(role);
             boolean fits = role.fitsUnitType(unitType);
+            if (!fits && !isSelected) {
+                continue;
+            }
 
+            JCheckBox checkBox = roleCheckBoxes.get(role);
             checkBox.setSelected(isSelected);
-            checkBox.setVisible(fits || isSelected);
+            rolesPanel.add(checkBox);
+            offeredRoles.add(role);
 
             if (isSelected && !fits) {
                 mismatchedRoles.add(role);

@@ -38,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.NavigableSet;
 import java.util.TreeSet;
@@ -142,6 +143,19 @@ class AvailabilityTabTest {
         assertTrue(tab.isRoleOffered(MissionRole.URBAN), "A Mek can be an urban unit");
         assertFalse(tab.isRoleOffered(MissionRole.MEK_CARRIER), "A Mek does not carry Meks");
         assertFalse(tab.isRoleOffered(MissionRole.PARATROOPER), "Paratrooper is an infantry role");
+    }
+
+    @Test
+    void theRoleGridHoldsOnlyTheOfferedRolesWithNoHoles() {
+        // Hiding non-fitting roles with setVisible left holes in the grid. Now only the offered roles are added, so
+        // the grid size equals the offered count and is well short of every role.
+        AvailabilityTab tab = new AvailabilityTab(new StubEntitySource(buildMek()));
+
+        long offered = Arrays.stream(MissionRole.values()).filter(tab::isRoleOffered).count();
+
+        assertEquals(offered, tab.missionRoleGridSize(), "The grid should hold exactly the offered roles");
+        assertTrue(tab.missionRoleGridSize() < MissionRole.values().length,
+              "A Mek does not fit every role, so the grid must be smaller than the full list");
     }
 
     @Test
