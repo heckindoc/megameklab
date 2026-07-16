@@ -128,16 +128,30 @@ class AvailabilityTableModelTest {
     }
 
     @Test
-    void addingAFactionTwiceOnlyAddsItOnce() {
+    void addingTheSameFactionAndRangeTwiceOnlyAddsItOnce() {
         int first = model.addRow(new AvailabilityRow("FS", "Federated Suns", 5, UNSPECIFIED_YEAR, UNSPECIFIED_YEAR,
               false));
         int second = model.addRow(new AvailabilityRow("FS", "Federated Suns", 9, UNSPECIFIED_YEAR, UNSPECIFIED_YEAR,
               false));
 
-        assertEquals(first, second);
+        assertEquals(first, second, "Same faction and same range is an exact duplicate and is ignored");
         assertEquals(1, model.getRowCount());
-        // The first value stands; the player edits it with the slider rather than by adding the faction again
         assertEquals(5, model.getRow(0).availability());
+    }
+
+    @Test
+    void oneFactionCanHaveDifferentAvailabilityInDifferentYearRanges() {
+        // The whole point of variable availability: the Federated Suns field this often early and rarely late.
+        model.addRow(new AvailabilityRow("FS", "Federated Suns", 8, 3050, 3060, false));
+        model.addRow(new AvailabilityRow("FS", "Federated Suns", 3, 3061, 3090, false));
+
+        assertEquals(2, model.getRowCount(), "Same faction, different ranges, must both be kept");
+        List<ForceGeneratorAvailability> entries = model.toAvailabilityEntries();
+        assertEquals(2, entries.size());
+        assertEquals("FS:8", entries.get(0).availabilityCodes());
+        assertEquals(3050, entries.get(0).startYear());
+        assertEquals("FS:3", entries.get(1).availabilityCodes());
+        assertEquals(3061, entries.get(1).startYear());
     }
 
     @Test

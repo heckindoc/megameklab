@@ -43,6 +43,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -60,6 +61,9 @@ import javax.swing.event.DocumentListener;
 import megamek.client.ratgenerator.FactionRecord;
 import megamek.client.ratgenerator.RATGenerator;
 import megamek.client.ui.util.UIUtil;
+import megamek.common.universe.Faction2;
+import megamek.common.universe.FactionTag;
+import megamek.common.universe.Factions2;
 
 /**
  * Picks the factions that field a unit. Multi-select, because "list the factions I want" is one step, not one trip
@@ -100,6 +104,7 @@ public class AddFactionsDialog extends JDialog {
 
     private final JTextField filterField = new JTextField();
     private final JCheckBox showMinorCheckBox = new JCheckBox("Show minor factions");
+    private final JCheckBox showFutureCheckBox = new JCheckBox("Show factions from later eras");
     private final JPanel factionListPanel = new JPanel();
     private final JButton addButton = new JButton("Add");
 
@@ -111,7 +116,8 @@ public class AddFactionsDialog extends JDialog {
     /**
      * @param parent        the window to sit over
      * @param year          the unit's introduction year, which decides which factions exist
-     * @param alreadyChosen faction codes already in the table, shown ticked and disabled
+     * @param alreadyChosen faction codes already in the table, labelled "already added" but still selectable so one
+     *                      faction can be given a second year range
      */
     public AddFactionsDialog(Component parent, int year, List<String> alreadyChosen) {
         super((Dialog) null, "Add factions", true);
@@ -179,6 +185,11 @@ public class AddFactionsDialog extends JDialog {
         showMinorCheckBox.addActionListener(event -> populateFactions());
         topPanel.add(minorPanel);
 
+        JPanel futurePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        futurePanel.add(showFutureCheckBox);
+        showFutureCheckBox.addActionListener(event -> populateFactions());
+        topPanel.add(futurePanel);
+
         add(topPanel, BorderLayout.NORTH);
 
         factionListPanel.setLayout(new BoxLayout(factionListPanel, BoxLayout.Y_AXIS));
@@ -215,10 +226,20 @@ public class AddFactionsDialog extends JDialog {
                 // A command, not a faction. The long tail; not offered yet.
                 continue;
             }
+            if (isSpecialFaction(factionRecord.getKey())) {
+                // Not a real faction: a game mechanic that happens to have a faction entry, like the Piracy Success
+                // Index. It must never be offered as somewhere a unit can be fielded.
+                continue;
+            }
             if (factionRecord.isMinor() && !showMinorCheckBox.isSelected()) {
                 continue;
             }
-            if (!factionRecord.isActiveInYear(year)) {
+            // By default only factions that exist at the unit's introduction year. Ticking "later eras" also offers
+            // factions that appear afterwards, so a unit can be given to, say, the Republic of the Sphere.
+            boolean active = showFutureCheckBox.isSelected()
+                  ? factionRecord.isActiveInOrAfterYear(year)
+                  : factionRecord.isActiveInYear(year);
+            if (!active) {
                 continue;
             }
             factions.add(factionRecord);
@@ -228,9 +249,11 @@ public class AddFactionsDialog extends JDialog {
 
         for (FactionRecord factionRecord : factions) {
             String code = factionRecord.getKey();
-            JCheckBox checkBox = new JCheckBox(factionRecord.getName(year) + " (" + code + ")");
-            checkBox.setEnabled(!alreadyChosen.contains(code));
-            checkBox.setSelected(alreadyChosen.contains(code));
+            // Already-chosen factions stay selectable: adding one again makes a second row, which is how a player gives
+            // one faction different availability in different year ranges.
+            String label = factionRecord.getName(year) + " (" + code + ")"
+                  + (alreadyChosen.contains(code) ? " - already added" : "");
+            JCheckBox checkBox = new JCheckBox(label);
             factionCheckBoxes.put(code, checkBox);
             factionListPanel.add(checkBox);
         }
@@ -238,6 +261,20 @@ public class AddFactionsDialog extends JDialog {
         applyFilter();
         factionListPanel.revalidate();
         factionListPanel.repaint();
+    }
+
+    /**
+     * Whether a faction code is a special, non-fielding entry rather than a real faction. Some game mechanics, such as
+     * the Piracy Success Index, are stored as factions but must never be offered as somewhere a unit is deployed.
+     *
+     * @param factionCode the faction key
+     *
+     * @return {@code true} if the faction is tagged special
+     */
+    private static boolean isSpecialFaction(String factionCode) {
+        Optional<Faction2> faction = Factions2.getInstance().getFaction(factionCode);
+
+        return faction.isPresent() && faction.get().is(FactionTag.SPECIAL);
     }
 
     private void applyFilter() {
@@ -263,7 +300,8 @@ public class AddFactionsDialog extends JDialog {
             }
         }
         for (Map.Entry<String, JCheckBox> entry : factionCheckBoxes.entrySet()) {
-            if (entry.getValue().isSelected() && !alreadyChosen.contains(entry.getKey())) {
+            // No already-chosen guard here: re-adding a faction is how a player gives it a second year range.
+            if (entry.getValue().isSelected()) {
                 chosen.add(entry.getKey());
             }
         }

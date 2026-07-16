@@ -142,8 +142,9 @@ public class AvailabilityTableModel extends AbstractTableModel {
     }
 
     /**
-     * Adds a faction, ignoring it if that faction is already in the table. A player who ticks the same faction twice
-     * means it once.
+     * Adds a row, unless a row for the same faction AND the same year range is already present. One faction can appear
+     * more than once, as long as the ranges differ: that is how a player gives it a different availability early and
+     * late. Only an exact duplicate is ignored.
      *
      * @param row the row to add
      *
@@ -151,7 +152,10 @@ public class AvailabilityTableModel extends AbstractTableModel {
      */
     public int addRow(AvailabilityRow row) {
         for (int index = 0; index < rows.size(); index++) {
-            if (rows.get(index).factionCode().equals(row.factionCode())) {
+            AvailabilityRow existing = rows.get(index);
+            if (existing.factionCode().equals(row.factionCode())
+                  && (existing.fromYear() == row.fromYear())
+                  && (existing.toYear() == row.toYear())) {
                 return index;
             }
         }

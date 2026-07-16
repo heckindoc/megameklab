@@ -74,6 +74,8 @@ import megamek.client.ratgenerator.RATGenerator;
 import megamek.client.ui.dialogs.UnitLoadingDialog;
 import megamek.client.ui.util.UIUtil;
 import megamek.common.loaders.MekFileParser;
+import megamek.common.loaders.MekSummary;
+import megamek.common.loaders.MekSummaryCache;
 import megamek.common.units.Entity;
 import megamek.common.units.ForceGeneratorAvailability;
 import megamek.common.units.UnitType;
@@ -111,6 +113,9 @@ public class AvailabilityTab extends ITab {
     private static final int TABLE_WIDTH = 640;
     private static final int TABLE_HEIGHT = 200;
     private static final int ROLE_COLUMNS = 4;
+
+    /** Cached canon chassis names, lowercased. Built once; canon data does not change within a session. */
+    private static Set<String> cachedCanonChassisNames;
 
     private RefreshListener refresh;
 
@@ -734,14 +739,35 @@ public class AvailabilityTab extends ITab {
     }
 
     private boolean isCanonChassis() {
-        RATGenerator ratGenerator = RATGenerator.getInstance();
-        if (!ratGenerator.isInitialized()) {
-            return false;
+        return canonChassisNames().contains(getEntity().getChassis().toLowerCase());
+    }
+
+    /**
+     * The chassis names that belong to canon units, lowercased. Built once from the unit cache. The Force Generator's
+     * own chassis list cannot answer this: it holds custom chassis this feature injected into it, so a brand new custom
+     * chassis would wrongly read as canon.
+     *
+     * @return the canon chassis names, or an empty set until the unit cache is ready
+     */
+    private static Set<String> canonChassisNames() {
+        if (cachedCanonChassisNames != null) {
+            return cachedCanonChassisNames;
         }
 
-        // Direct key lookup rather than scanning every chassis: O(1), and it never iterates a collection the Force
-        // Generator's loader thread might still be writing to.
-        return ratGenerator.getChassisRecord(chassisKeyOf(getEntity())) != null;
+        MekSummaryCache mekSummaryCache = MekSummaryCache.getInstance();
+        if (!mekSummaryCache.isInitialized()) {
+            return Set.of();
+        }
+
+        Set<String> names = new HashSet<>();
+        for (MekSummary mekSummary : mekSummaryCache.getAllMeks()) {
+            if (mekSummary.isCanon()) {
+                names.add(mekSummary.getChassis().toLowerCase());
+            }
+        }
+        cachedCanonChassisNames = names;
+
+        return names;
     }
 
     // --- Force Generator lookups --------------------------------------------------------------------------------
