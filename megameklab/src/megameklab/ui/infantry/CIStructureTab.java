@@ -167,7 +167,7 @@ public class CIStructureTab extends ITab implements InfantryBuildListener {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.insets = new Insets(5, 0, 5, 0);
+        gbc.insets = new Insets(5, 0, 5, 5);
         add(equipmentPane, gbc);
     }
 
@@ -330,6 +330,9 @@ public class CIStructureTab extends ITab implements InfantryBuildListener {
             motiveTypeChanged(EntityMovementMode.INF_LEG, false);
         }
         getInfantry().setTechLevel(basicInfoView.getTechLevel().getCompoundTechLevel(basicInfoView.useClanTechBase()));
+        if (getInfantry().getTechLevel() < SimpleTechLevel.ADVANCED.ordinal()) {
+            getInfantry().equipDisposableWeapon(null);
+        }
         UnitUtil.checkEquipmentByTechLevel(getInfantry(), basicInfoView);
         InfantryUtil.resetInfantryArmor(getInfantry());
         platoonTypeView.setFromEntity(getInfantry());
