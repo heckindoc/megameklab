@@ -54,6 +54,7 @@ import javax.swing.table.TableRowSorter;
 import megamek.client.ui.WrapLayout;
 import megamek.client.ui.clientGUI.GUIPreferences;
 import megamek.client.ui.models.XTableColumnModel;
+import megamek.client.ui.util.UIUtil;
 import megamek.common.SimpleTechLevel;
 import megamek.common.equipment.EquipmentType;
 import megamek.common.equipment.WeaponType;
@@ -65,6 +66,7 @@ import megameklab.ui.EntitySource;
 import megameklab.ui.util.EquipmentTableModel;
 import megameklab.ui.util.IView;
 import megameklab.ui.util.RefreshListener;
+import megameklab.util.CConfig;
 import megameklab.util.InfantryUtil;
 
 /**
@@ -248,7 +250,7 @@ public class CIEquipmentView extends IView implements ActionListener {
 
     /**
      * @return true if the game's tech level is Advanced or higher, where the Advanced Disposable Weapon rule (TO:AR
-     *       p.106) is available
+     * p.106) is available
      */
     private boolean isDisposableTechLevel() {
         return techManager.getTechLevel().ordinal() >= SimpleTechLevel.ADVANCED.ordinal();
@@ -310,67 +312,43 @@ public class CIEquipmentView extends IView implements ActionListener {
 
     private void setEquipmentView() {
         XTableColumnModel columnModel = (XTableColumnModel) masterEquipmentTable.getColumnModel();
-        if (tableMode) {
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_NAME), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DAMAGE), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DIVISOR), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_SPECIAL), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_HEAT), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_MEDIUM_RANGE),
-                  false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_RANGE), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_SHOTS), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TECH), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TECH_LEVEL), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TECH_RATING), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_PROTOTYPE),
-                  false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_PRODUCTION),
-                  false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_COMMON), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_EXTINCT),
-                  false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_REINTRODUCED),
-                  false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_COST), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_CREW), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_BV), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TON), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_CRIT), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_REF), true);
-        } else {
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_NAME), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DAMAGE), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DIVISOR), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_SPECIAL), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_HEAT), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_MEDIUM_RANGE),
-                  false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_RANGE), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_SHOTS), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TECH), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TECH_LEVEL), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TECH_RATING), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_PROTOTYPE),
-                  true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_PRODUCTION),
-                  true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_COMMON), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_EXTINCT), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_REINTRODUCED),
-                  true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_COST), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_CREW), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_BV), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TON), true);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_CRIT), false);
-            columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_REF), true);
-        }
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_NAME), true);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DAMAGE), tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DIVISOR), false);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_SPECIAL), tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_HEAT), false);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_MEDIUM_RANGE),
+              false);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_RANGE), tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_SHOTS), false);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TECH), true);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TECH_LEVEL), !tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TECH_RATING),
+              !tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_PROTOTYPE),
+              !tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_PRODUCTION),
+              !tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_COMMON), !tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_EXTINCT),
+              !tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_DATE_REINTRODUCED),
+              !tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_COST), !tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_CREW), tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_BV), tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_TON), tableMode);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_CRIT), false);
+        columnModel.setColumnVisible(columnModel.getColumnByModelIndex(EquipmentTableModel.COL_REF), !tableMode);
     }
 
     /** Creates the control panel with the filters and buttons. */
     private JComponent getControlPanel() {
         Box controlPanel = Box.createVerticalBox();
+        if (CConfig.getBooleanParam(CConfig.NAG_EQUIPMENT_CTRL_CLICK)) {
+            controlPanel.add(getUserInfoPanel());
+            controlPanel.add(Box.createVerticalStrut(4));
+        }
         controlPanel.add(getShowTogglesPanel());
         controlPanel.add(Box.createVerticalStrut(4));
         controlPanel.add(getHideTogglesPanel());
@@ -378,8 +356,30 @@ public class CIEquipmentView extends IView implements ActionListener {
         controlPanel.add(getAddRemoveButtonsPanel());
         controlPanel.add(Box.createVerticalStrut(4));
         controlPanel.add(getTextFilterAndTableModeButtonPanel());
-        controlPanel.setBorder(new EmptyBorder(5, 2, 5, 2));
+        controlPanel.setBorder(new EmptyBorder(5, 0, 5, 0));
         return controlPanel;
+    }
+
+    /**
+     * Creates a small info panel ("Ctrl-Click selects only that equipment"). Has a dismiss button that will prevent it
+     * from being shown again.
+     */
+    private JComponent getUserInfoPanel() {
+        Box userInfoPanel = Box.createHorizontalBox();
+        JButton gotItButton = new JButton("Got it!");
+        gotItButton.setForeground(UIUtil.uiYellow());
+        gotItButton.addActionListener(e -> {
+            userInfoPanel.setVisible(false);
+            CConfig.setParam(CConfig.NAG_EQUIPMENT_CTRL_CLICK, Boolean.toString(false));
+            CConfig.saveConfig();
+        });
+        var userInfoText = new JLabel("Note: Ctrl-Click a filter to add it to the selected filters.");
+        userInfoText.setForeground(UIUtil.uiYellow());
+        userInfoPanel.add(userInfoText);
+        userInfoPanel.add(Box.createHorizontalStrut(15));
+        userInfoPanel.add(gotItButton);
+        userInfoPanel.add(Box.createHorizontalGlue());
+        return userInfoPanel;
     }
 
     /**
@@ -510,5 +510,4 @@ public class CIEquipmentView extends IView implements ActionListener {
         textFilterAndTableModeButtonPanel.setOpaque(true);
         return textFilterAndTableModeButtonPanel;
     }
-
 }

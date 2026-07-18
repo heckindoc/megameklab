@@ -32,6 +32,7 @@
  */
 package megameklab.ui.infantry;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.util.List;
@@ -103,9 +104,9 @@ public class CISpecializationView extends IView implements TableModelListener {
 
         model.addTableModelListener(this);
 
-        setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        add(scroll);
-        add(Box.createHorizontalGlue());
+        setLayout(new BorderLayout());
+        add(Box.createVerticalStrut(5), BorderLayout.PAGE_START);
+        add(scroll, BorderLayout.CENTER);
     }
 
     public void refresh() {

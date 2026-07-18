@@ -226,6 +226,7 @@ public class CIWeaponView extends BuildView implements ActionListener {
         cbNumSecondary.addActionListener(this);
 
         if (!inf.hasFieldWeapon()) {
+            cbNumGuns.setSelectedIndex(0);
             cbNumGuns.setEnabled(false);
             if (!FIELD_GUN_MODES.contains(inf.getMovementMode())) {
                 txtGuns.setText(fgMotiveMsg);
@@ -246,6 +247,7 @@ public class CIWeaponView extends BuildView implements ActionListener {
             cbNumGuns.setEnabled(true);
         } else {
             txtGuns.setEnabled(false);
+            cbNumGuns.setSelectedIndex(0);
             cbNumGuns.setEnabled(false);
         }
 
