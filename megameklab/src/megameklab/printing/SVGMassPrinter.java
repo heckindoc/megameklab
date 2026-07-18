@@ -252,25 +252,24 @@ public class SVGMassPrinter {
 
         private String getMWCategory(EquipmentType eq) {
             if (eq instanceof WeaponType wp) {
+                AmmoType.AmmoTypeEnum ammoType = wp.getAmmoType();
+                AmmoType.AmmoCategory ammoCategory = (ammoType == null) ? null : ammoType.getCategory();
                 if (wp.hasFlag(WeaponType.F_ENERGY)
-                      || ((wp.hasFlag(WeaponType.F_PLASMA) && (wp.getAmmoType() == AmmoType.AmmoTypeEnum.PLASMA)))
-                      || wp.getAmmoType().getCategory().equals(AmmoType.AmmoCategory.Energy)) {
+                    || (wp.hasFlag(WeaponType.F_PLASMA) && (ammoType == AmmoType.AmmoTypeEnum.PLASMA))
+                    || (ammoCategory == AmmoType.AmmoCategory.Energy)) {
                     return "E";
                 }
-                if (wp.hasFlag(WeaponType.F_MISSILE) || wp.getAmmoType()
-                      .getCategory()
-                      .equals(AmmoType.AmmoCategory.Missile)) {
-                    return "M";
+                if (wp.hasFlag(WeaponType.F_ARTILLERY)
+                    || (ammoCategory == AmmoType.AmmoCategory.Artillery)) {
+                    return "A";
                 }
-                if (wp.hasFlag(WeaponType.F_BALLISTIC) || wp.getAmmoType()
-                      .getCategory()
-                      .equals(AmmoType.AmmoCategory.Ballistic)) {
+                if (wp.hasFlag(WeaponType.F_BALLISTIC)
+                    || (ammoCategory == AmmoType.AmmoCategory.Ballistic)) {
                     return "B";
                 }
-                if (wp.hasFlag(WeaponType.F_ARTILLERY) || wp.getAmmoType()
-                      .getCategory()
-                      .equals(AmmoType.AmmoCategory.Artillery)) {
-                    return "A";
+                if (wp.hasFlag(WeaponType.F_MISSILE)
+                    || (ammoCategory == AmmoType.AmmoCategory.Missile)) {
+                    return "M";
                 }
             } else
             if (eq instanceof AmmoType ammo) {
