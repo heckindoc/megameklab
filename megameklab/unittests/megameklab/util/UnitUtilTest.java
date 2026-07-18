@@ -36,11 +36,15 @@ package megameklab.util;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.File;
+
 import megamek.common.TechAdvancement;
 import megamek.common.TechConstants;
 import megamek.common.enums.TechBase;
 import megamek.common.interfaces.ITechnology;
+import megamek.common.loaders.MekFileParser;
 import megamek.common.units.BipedMek;
+import megamek.common.units.Entity;
 import megamek.common.units.Mek;
 import megameklab.testing.util.InitializeTypes;
 import org.junit.jupiter.api.Test;
@@ -51,12 +55,21 @@ class UnitUtilTest {
 
     @Test
     void isLegalUsesOriginalBuildYear() {
-        ITechnology lostech = new TechAdvancement(TechBase.IS)
-              .setISAdvancement(2500, 2600, 2700, 3025, ITechnology.DATE_NONE);
-        ITechnology currenttech = new TechAdvancement(TechBase.IS)
-              .setISAdvancement(3030, 3040, 3050, ITechnology.DATE_NONE, ITechnology.DATE_NONE);
-        ITechnology futuretech = new TechAdvancement(TechBase.IS)
-              .setISAdvancement(3100, 3110, 3150, ITechnology.DATE_NONE, ITechnology.DATE_NONE);
+        ITechnology lostech = new TechAdvancement(TechBase.IS).setISAdvancement(2500,
+              2600,
+              2700,
+              3025,
+              ITechnology.DATE_NONE);
+        ITechnology currenttech = new TechAdvancement(TechBase.IS).setISAdvancement(3030,
+              3040,
+              3050,
+              ITechnology.DATE_NONE,
+              ITechnology.DATE_NONE);
+        ITechnology futuretech = new TechAdvancement(TechBase.IS).setISAdvancement(3100,
+              3110,
+              3150,
+              ITechnology.DATE_NONE,
+              ITechnology.DATE_NONE);
         Mek mek = new BipedMek();
         mek.setYear(3050);
         mek.setTechLevel(TechConstants.T_IS_TW_NON_BOX);
@@ -73,13 +86,38 @@ class UnitUtilTest {
 
     @Test
     void isLegalIgnoresExtinctionForFrankenMeks() {
-        ITechnology lostech = new TechAdvancement(TechBase.IS)
-              .setISAdvancement(2500, 2600, 2700, 3025, ITechnology.DATE_NONE);
+        ITechnology lostech = new TechAdvancement(TechBase.IS).setISAdvancement(2500,
+              2600,
+              2700,
+              3025,
+              ITechnology.DATE_NONE);
         Mek mek = new BipedMek();
         mek.setYear(3050);
         mek.setTechLevel(TechConstants.T_IS_EXPERIMENTAL);
         mek.setFrankenMek(true);
 
         assertTrue(UnitUtil.isLegal(mek, lostech));
+    }
+
+    @Test
+    void saveWithoutGeneratorKeepsMtfUUIDFirst() {
+        Mek mek = new BipedMek();
+
+        String saved = UnitUtil.saveUnitToString(mek, false);
+
+        assertTrue(saved.startsWith("uuid:" + mek.getUnitFileUUID()));
+        assertFalse(saved.contains("generator:"));
+    }
+
+    @Test
+    void saveWithoutGeneratorKeepsCompleteBlkHeader() throws Exception {
+        Entity entity = new MekFileParser(new File("testresources/Aquarius Escort.blk")).getEntity();
+
+        String saved = UnitUtil.saveUnitToString(entity, false);
+
+        int uuidIndex = saved.indexOf("<UUID>");
+        assertTrue(uuidIndex >= 0);
+        assertTrue(uuidIndex < saved.indexOf("<UnitType>"));
+        assertTrue(saved.indexOf(entity.getUnitFileUUID()) > uuidIndex);
     }
 }

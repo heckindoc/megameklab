@@ -49,6 +49,8 @@ import megamek.common.TechConstants;
 import megamek.common.weapons.infantry.InfantryWeapon;
 import megameklab.ui.MegaMekLabMainUI;
 import megameklab.ui.PopupMessages;
+import megameklab.ui.generalUnit.AvailabilityTab;
+import megameklab.util.CConfig;
 import megameklab.ui.generalUnit.FluffTab;
 import megameklab.ui.generalUnit.AnalysisTab;
 import megameklab.ui.generalUnit.PreviewTab;
@@ -60,6 +62,7 @@ public class CIMainUI extends MegaMekLabMainUI {
     PreviewTab previewTab;
     AnalysisTab analysisTab;
     FluffTab fluffTab;
+    AvailabilityTab availabilityTab;
     CIStatusBar statusbar;
 
     @Override
@@ -86,15 +89,20 @@ public class CIMainUI extends MegaMekLabMainUI {
         statusbar = new CIStatusBar(this);
         structureTab = new CIStructureTab(this);
         fluffTab = new FluffTab(this);
+        availabilityTab = new AvailabilityTab(this);
         previewTab = new PreviewTab(this);
         analysisTab = new AnalysisTab(this);
 
         structureTab.addRefreshedListener(this);
+        availabilityTab.addRefreshedListener(this);
         fluffTab.setRefreshedListener(this);
         statusbar.addRefreshedListener(this);
 
         configPane.addTab("Build", structureTab);
         configPane.addTab("Fluff", new TabScrollPane(fluffTab));
+        if (CConfig.showAvailabilityTab()) {
+            configPane.addTab("Availability", new TabScrollPane(availabilityTab, availabilityTab.refreshOnShow));
+        }
         configPane.addTab("Preview", previewTab);
         configPane.addTab("Analysis", analysisTab);
 
@@ -132,6 +140,7 @@ public class CIMainUI extends MegaMekLabMainUI {
         statusbar.refresh();
         structureTab.refresh();
         fluffTab.refresh();
+        availabilityTab.refresh();
         previewTab.refresh();
         analysisTab.refresh();
         refreshHeader();

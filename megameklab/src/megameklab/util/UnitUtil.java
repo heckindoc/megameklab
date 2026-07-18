@@ -64,6 +64,7 @@ import megamek.common.interfaces.ITechManager;
 import megamek.common.interfaces.ITechnology;
 import megamek.common.loaders.BLKFile;
 import megamek.common.loaders.MekFileParser;
+import megamek.common.loaders.MtfFile;
 import megamek.common.options.OptionsConstants;
 import megamek.common.units.*;
 import megamek.common.util.BuildingBlock;
@@ -1985,7 +1986,12 @@ public class UnitUtil {
                 unitAsString = sb.toString();
             }
             if (!includeGeneratorHeader) {
-                return unitAsString.substring(unitAsString.indexOf("\n") + 1);
+                int generatorStart = unitAsString.indexOf(MtfFile.GENERATOR);
+                if (generatorStart >= 0) {
+                    int generatorEnd = unitAsString.indexOf('\n', generatorStart);
+                    return unitAsString.substring(0, generatorStart)
+                          + ((generatorEnd >= 0) ? unitAsString.substring(generatorEnd + 1) : "");
+                }
             }
             return unitAsString;
         } catch (Exception ex) {

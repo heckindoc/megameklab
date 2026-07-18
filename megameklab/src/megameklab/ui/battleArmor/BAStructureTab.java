@@ -272,7 +272,10 @@ public class BAStructureTab extends ITab implements BABuildListener, ArmorAlloca
         } else {
             refresh.refreshEquipmentTable();
         }
-        panChassis.refresh();
+        if (!panBasicInfo.useClanTechBase()) {
+            getBattleArmor().setClanExoWithoutHarJel(false);
+        }
+        panChassis.setFromEntity(getBattleArmor());
         panMovement.refresh();
         panEnhancements.setFromEntity(getBattleArmor());
         panArmor.refresh();
@@ -367,10 +370,10 @@ public class BAStructureTab extends ITab implements BABuildListener, ArmorAlloca
         getBattleArmor().setWeightClass(weightClass);
         if (weightClass > EntityWeightClass.WEIGHT_ULTRA_LIGHT) {
             getBattleArmor().setIsExoskeleton(false);
-            getBattleArmor().setClanExoWithoutHarjel(false);
+            getBattleArmor().setClanExoWithoutHarJel(false);
         }
         panBasicInfo.setFromEntity(getBattleArmor());
-        panChassis.refresh();
+        panChassis.setFromEntity(getBattleArmor());
         panMovement.setFromEntity(getBattleArmor());
         panArmor.setFromEntity(getBattleArmor());
         panEnhancements.setFromEntity(getBattleArmor());
@@ -381,18 +384,19 @@ public class BAStructureTab extends ITab implements BABuildListener, ArmorAlloca
     @Override
     public void exoskeletonChanged(boolean exoskeleton) {
         getBattleArmor().setIsExoskeleton(exoskeleton);
-        if (exoskeleton && !panBasicInfo.useClanTechBase()) {
-            getBattleArmor().setClanExoWithoutHarjel(panChassis.hasHarjel());
+        if (panBasicInfo.useClanTechBase() && !exoskeleton) {
+            getBattleArmor().setClanExoWithoutHarJel(false);
         }
         panBasicInfo.setFromEntity(getBattleArmor());
+        panChassis.setFromEntity(getBattleArmor());
         panArmor.refresh();
         refresh.refreshStatus();
         refreshPreview();
     }
 
     @Override
-    public void harjelChanged(boolean harjel) {
-        getBattleArmor().setClanExoWithoutHarjel(panChassis.isExoskeleton() && !harjel);
+    public void harJelChanged(boolean harJel) {
+        getBattleArmor().setClanExoWithoutHarJel(panChassis.isExoskeleton() && !harJel);
         refresh.refreshStatus();
         refreshPreview();
     }

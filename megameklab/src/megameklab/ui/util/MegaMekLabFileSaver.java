@@ -36,11 +36,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Calendar;
+import java.util.Objects;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import megamek.common.annotations.Nullable;
+import megamek.common.loaders.MekFileParser;
 import megamek.common.units.Entity;
 import megamek.common.units.Mek;
 import megamek.logging.MMLogger;
@@ -108,7 +110,7 @@ public class MegaMekLabFileSaver {
             if (selectedFile == null) {
                 return null;
             }
-            filePathName = selectedFile.getPath();
+            return saveUnitAsTo(ownerFrame, selectedFile, entity);
         }
 
         CConfig.setMostRecentFile(filePathName);
@@ -119,10 +121,80 @@ public class MegaMekLabFileSaver {
 
         File saveFile = chooseSaveFile(ownerFrame, entity);
         if (saveFile != null) {
-            CConfig.setMostRecentFile(saveFile.toString());
-            return saveUnitTo(ownerFrame, saveFile, entity);
+            return saveUnitAsTo(ownerFrame, saveFile, entity);
         }
         return null;
+    }
+
+    String saveUnitAsTo(JFrame ownerFrame, File saveFile, Entity entity) {
+        String previousUUID = entity.getUnitFileUUID();
+        if (!prepareUnitFileUUID(ownerFrame, saveFile, entity)) {
+            return null;
+        }
+        String savedFile = saveUnitTo(ownerFrame, saveFile, entity);
+        if (savedFile == null) {
+            entity.setUnitFileUUID(previousUUID);
+        } else {
+            entity.storeSavedUnitData();
+            CConfig.setMostRecentFile(saveFile.toString());
+        }
+        return savedFile;
+    }
+
+    private boolean prepareUnitFileUUID(JFrame ownerFrame, File saveFile, Entity entity) {
+        Entity targetUnit = readExistingUnit(saveFile);
+        if (hasOriginalUnitIdentity(targetUnit)) {
+            String targetUUID = targetUnit.getOriginalUnitFileUUID();
+            boolean namesMatch = Objects.equals(entity.getChassis(), targetUnit.getOriginalChassis())
+                  && Objects.equals(entity.getModel(), targetUnit.getOriginalModel());
+            if (namesMatch) {
+                entity.setUnitFileUUID(targetUUID);
+                return true;
+            }
+
+            if (Objects.equals(entity.getUnitFileUUID(), targetUUID)) {
+                return true;
+            }
+
+            if (hasOriginalUnitIdentity(entity)) {
+                PopupMessages.UnitFileUUIDChoice choice = PopupMessages.showUnitFileUUIDConflict(
+                      ownerFrame, entity, targetUnit);
+                if (choice == PopupMessages.UnitFileUUIDChoice.TARGET) {
+                    entity.setUnitFileUUID(targetUUID);
+                } else if (choice == PopupMessages.UnitFileUUIDChoice.CANCEL) {
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        if (hasOriginalUnitIdentity(entity)
+              && Objects.equals(entity.getChassis(), entity.getOriginalChassis())
+              && Objects.equals(entity.getModel(), entity.getOriginalModel())) {
+            return true;
+        }
+
+        entity.regenerateUnitFileUUID();
+        return true;
+    }
+
+    private @Nullable Entity readExistingUnit(File file) {
+        if (!file.isFile()) {
+            return null;
+        }
+        try {
+            return new MekFileParser(file).getEntity();
+        } catch (Exception ex) {
+            logger.warn("Unable to read existing unit file {} before Save As.", file, ex);
+            return null;
+        }
+    }
+
+    private static boolean hasOriginalUnitIdentity(@Nullable Entity entity) {
+        return entity != null
+              && entity.getOriginalChassis() != null
+              && entity.getOriginalModel() != null
+              && entity.getOriginalUnitFileUUID() != null;
     }
 
     // Replace owner class with EntitySource... somehow.
@@ -153,13 +225,17 @@ public class MegaMekLabFileSaver {
                 }
                 ps.println(UnitUtil.saveUnitToString(entity, true));
             }
-
-            PopupMessages.showUnitSavedMessage(ownerFrame, entity, file);
-            return file.toString();
         } catch (Exception ex) {
             PopupMessages.showFileWriteError(ownerFrame, ex.getMessage());
             logger.error("", ex);
             return null;
         }
+
+        try {
+            PopupMessages.showUnitSavedMessage(ownerFrame, entity, file);
+        } catch (Exception ex) {
+            logger.error("Unable to show unit saved message", ex);
+        }
+        return file.toString();
     }
 }
