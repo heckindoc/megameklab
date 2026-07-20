@@ -225,6 +225,8 @@ public class CIWeaponView extends BuildView implements ActionListener {
         }
         cbNumSecondary.addActionListener(this);
 
+        cbNumGuns.removeActionListener(this);
+
         if (!inf.hasFieldWeapon()) {
             cbNumGuns.setSelectedIndex(0);
             cbNumGuns.setEnabled(false);
@@ -235,10 +237,8 @@ public class CIWeaponView extends BuildView implements ActionListener {
             }
         } else {
             cbNumGuns.setEnabled(true);
-            cbNumGuns.removeActionListener(this);
             List<Mounted<?>> fieldGuns = inf.originalFieldWeapons();
             cbNumGuns.setSelectedIndex(fieldGuns.size());
-            cbNumGuns.addActionListener(this);
             txtGuns.setText(fieldGuns.getFirst().getName());
         }
 
@@ -249,8 +249,9 @@ public class CIWeaponView extends BuildView implements ActionListener {
             txtGuns.setEnabled(false);
             cbNumGuns.setSelectedIndex(0);
             cbNumGuns.setEnabled(false);
-            inf.equipDisposableWeapon(null);
         }
+
+        cbNumGuns.addActionListener(this);
 
         chkAntiMek.removeActionListener(this);
         chkAntiMek.setSelected(inf.hasAntiMekGear());

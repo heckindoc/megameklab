@@ -357,8 +357,7 @@ public class CIEquipmentView extends IView implements ActionListener {
     }
 
     /**
-     * Creates a small info panel ("Ctrl-Click selects only that equipment"). Has a dismiss button that will prevent it
-     * from being shown again.
+     * Creates a small info panel. Has a dismiss button that will prevent it from being shown again.
      */
     private JComponent getUserInfoPanel() {
         JPanel userInfoPanel = new JPanel(new WrapLayout(FlowLayout.LEFT));

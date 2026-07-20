@@ -173,8 +173,6 @@ public class CIMountView extends IView implements ActionListener {
         // This outer panel prevents the customView from being stretched to fill the whole frame
         var outerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         outerPanel.add(customMountView);
-
-        mountPanel.add(new TabScrollPane(outerPanel), CARD_CUSTOM);
         customMountView.movementModeChanged();
 
         return new TabScrollPane(outerPanel);
